@@ -1,13 +1,21 @@
 mod connection;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::io::{Write, self};
 
-use connection::Connection;
+use connection::{Connection, LoginResponse};
+
+#[derive(Debug, Subcommand)]
+enum CLIOperation {
+    Register,
+    Login,
+    ListPlants,
+}
 
 #[derive(Debug, Parser)]
 struct CliParameters {
-    operation: String,  // verbose option
+    #[clap(subcommand)]
+    operation: CLIOperation,  // verbose option
 }
 
 fn main() -> Result<(), Box<reqwest::Error>> {
@@ -15,11 +23,22 @@ fn main() -> Result<(), Box<reqwest::Error>> {
     let mut handle = stdout.lock();
 
     let args = CliParameters::parse();
-    writeln!(handle, "operation: {}", args.operation).unwrap();
+    match args.operation {
+        CLIOperation::ListPlants => writeln!(handle, "got list").unwrap(),
+        CLIOperation::Login => writeln!(handle, "got login").unwrap(),
+        CLIOperation::Register => writeln!(handle, "got Register").unwrap(),
+        _ => writeln!(handle, "unkown").unwrap(),
+    }
 
     let connection = Connection::build_connection();
 
-    let body = connection.client.get("http://127.0.0.1:8080/api/v1/plants").send()?;
+    let response = connection.send_login()?;  // handle error with match
+    let status_code = response.status();
+    writeln!(handle, "status code: {:?}", status_code).unwrap();
+    let body: LoginResponse = match response.json() {
+        Ok(body) => serde_json::from_value(body).unwrap(),
+        Err(e) => panic!("Error while getting body of login response: {:?}", e)
+    };
     writeln!(handle, "body: {:?}", body).unwrap();
     Ok(())
 }
