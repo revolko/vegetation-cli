@@ -2,6 +2,13 @@
 name = "vegetation-cli"
 version = "0.1.0"
 edition = "2021"
+authors = ["revolko juraj.palubajp@gmail.com"]
+license = "MIT"
+description = "A tool to manage vegetation"
+readme = "README.md"
+homepage = "https://github.com/revolko/vegetation-cli"
+repository = "https://github.com/revolko/vegetation-cli"
+documentation = "https://github.com/revolko/vegetation-cli"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
