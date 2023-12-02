@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::cli_args::{RegisterArgs, LoginArgs};
+
 pub struct Connection {
     pub client: reqwest::blocking::Client,
     url: String,  // should change it to &str
@@ -23,19 +25,19 @@ impl Connection {
              .send()
      }
 
-     pub fn send_register(&self) -> Result<reqwest::blocking::Response, reqwest::Error> {
+     pub fn send_register(&self, args: RegisterArgs) -> Result<reqwest::blocking::Response, reqwest::Error> {
          let register_body = RegisterBody {
-             email: String::from("random@mail.com"),
-             username: String::from("revolko"),
-             password: String::from("my_pass_1234"),
+             email: String::from(args.email),
+             username: String::from(args.username),
+             password: String::from(args.password),
          };
          self.send_post("register", register_body)
      }
 
-     pub fn send_login(&self) -> Result<reqwest::blocking::Response, reqwest::Error> {
+     pub fn send_login(&self, args: LoginArgs) -> Result<reqwest::blocking::Response, reqwest::Error> {
          let login_body = LoginBody {
-             username: String::from("revolko"),
-             password: String::from("my_pass_1234"),
+             username: String::from(args.username),
+             password: String::from(args.password),
          };
          self.send_post("login", login_body)
      }
@@ -56,6 +58,6 @@ struct LoginBody {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct LoginResponse {
-    token: String,
+pub struct RegisterLoginResponse {
+    pub token: String,
 }
