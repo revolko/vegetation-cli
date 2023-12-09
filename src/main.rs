@@ -1,6 +1,7 @@
 mod connection;
 mod cli_args;
 mod operations;
+mod config;
 
 use clap::Parser;
 

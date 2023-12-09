@@ -1,16 +1,14 @@
 use serde::{Deserialize, Serialize};
-use std::env::{self};
 use reqwest::header::{AUTHORIZATION, HeaderMap};
 use reqwest::blocking::{Client, Response};
 use reqwest::Error;
 
 use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs};
+use crate::config::{VegConfig, VEG_CONFIG_NAME};
 
 fn create_auth_header() -> HeaderMap {
-    let token = match env::var("VEGETATION_TOKEN") {
-        Ok(token) => token,
-        Err(_) => panic!("Token not found. You need to login first."),
-    };
+    let conf: VegConfig = confy::load(VEG_CONFIG_NAME, None).unwrap();
+    let token = conf.token;
 
     let mut auth_header = String::from("Token ");
     auth_header.push_str(&token);

@@ -1,19 +1,17 @@
 use serde::de::DeserializeOwned;
-use std::env::{self};
 
 use reqwest::blocking::Response;
 use reqwest::Error;
 
 use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs, DeletePlantArgs};
 use crate::connection::{Connection, RegisterLoginResponse, PlantResponse};
+use crate::config::{VegConfig, VEG_CONFIG_NAME};
 
 fn set_token(value: String) -> () {
-    // SET TOKEN for the process only (when first login, or change of token)
-    env::set_var("VEGETATION_TOKEN", &value); 
-    match set_env::check_or_set("VEGETATION_TOKEN", value) {
-        Ok(_) => (),
-        Err(e) => panic!("Cannot set TOKEN env var: {:?}", e),
+    let conf = VegConfig {
+        token: value,
     };
+    confy::store(VEG_CONFIG_NAME, None, conf).unwrap();
 }
 
 fn handle_server_error(response: Response) {
