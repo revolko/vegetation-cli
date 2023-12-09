@@ -53,6 +53,16 @@ impl Connection {
              .json(&body).headers(headers).send();
      }
 
+     fn send_delete(&self, endpoint: &str, headers: Option<HeaderMap>) -> Result<Response, Error> {
+         let headers = match headers {
+             Some(h) => h,
+             None => HeaderMap::new(),
+         };
+
+         return self.client.delete(self.url.to_owned() + endpoint)
+             .headers(headers).send();
+     }
+
      pub fn send_register(&self, args: RegisterArgs) -> Result<Response, Error> {
          let register_body = RegisterBody {
              email: String::from(args.email),
@@ -78,6 +88,11 @@ impl Connection {
      pub fn send_create_plant(&self, create_args: CreatePlantArgs) -> Result<Response, Error> {
          let headers = create_auth_header();
          return self.send_post("plants", create_args, Some(headers));
+     }
+
+     pub fn send_delete_plant(&self, plant_id: u32) -> Result<Response, Error> {
+         let headers = create_auth_header();
+         return self.send_delete(&format!("plants/{}", plant_id), Some(headers));
      }
 }
 

@@ -26,12 +26,18 @@ pub struct CreatePlantArgs {
     pub light_requirements: String,
 }
 
+#[derive(Debug, Args, Serialize)]
+pub struct DeletePlantArgs {
+    pub plant_id: u32,
+}
+
 #[derive(Debug, Subcommand)]
 pub enum CLIOperation {
     Register(RegisterArgs),
     Login(LoginArgs),
     ListPlants,
     CreatePlant(CreatePlantArgs),
+    DeletePlant(DeletePlantArgs),
 }
 
 #[derive(Debug, Parser)]

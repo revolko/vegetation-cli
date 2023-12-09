@@ -4,7 +4,7 @@ use std::env::{self};
 use reqwest::blocking::Response;
 use reqwest::Error;
 
-use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs};
+use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs, DeletePlantArgs};
 use crate::connection::{Connection, RegisterLoginResponse, PlantResponse};
 
 fn set_token(value: String) -> () {
@@ -78,4 +78,15 @@ pub fn create_plant(create_args: CreatePlantArgs, connection: Connection) -> () 
 
     let body: PlantResponse = get_response_body(response);
     println!("Created plant:\n{:?}", body);
+}
+
+pub fn delete_plant(delete_args: DeletePlantArgs, connection: Connection) -> () {
+    let response = match connection.send_delete_plant(delete_args.plant_id) {
+        Ok(res) => res,
+        Err(e) => panic!("Request error {:?}", e),
+    };
+
+    if !response.status().is_success() {
+        handle_server_error(response);
+    };
 }
