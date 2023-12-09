@@ -74,7 +74,6 @@ pub fn list_plants(connection: Connection) -> () {
 }
 
 pub fn create_plant(create_args: CreatePlantArgs, connection: Connection) -> () {
-    println!("provided args {:?}", create_args);
     let response = connection.send_create_plant(create_args);
 
     let body: PlantResponse = get_response_body(response);
