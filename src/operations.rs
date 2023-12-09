@@ -1,9 +1,11 @@
+use serde::de::DeserializeOwned;
 use std::env::{self};
 
 use reqwest::blocking::Response;
+use reqwest::Error;
 
-use crate::cli_args::{RegisterArgs, LoginArgs};
-use crate::connection::{Connection, RegisterLoginResponse};
+use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs};
+use crate::connection::{Connection, RegisterLoginResponse, PlantResponse};
 
 fn set_token(value: String) -> () {
     // SET TOKEN for the process only (when first login, or change of token)
@@ -22,53 +24,59 @@ fn handle_server_error(response: Response) {
     match response.text() {
         Ok(text) => println!("Error: {:?}", text),
         Err(_) => panic!("Cannot parse response text"),
-    }
+    };
     panic!("Request error");
+}
+
+fn get_response_body<T: DeserializeOwned>(response: Result<Response, Error>) -> T {
+    let response = match response {
+        Ok(res) => res,
+        Err(e) => panic!("Request error {:?}", e),
+    };
+
+    if !response.status().is_success() {
+        // Server responded with an error
+        handle_server_error(response);
+        std::process::exit(-1); // not very pretty but show compiler that response can be moved
+    }
+
+    return match response.json() {
+        Ok(body) => match serde_json::from_value(body) {
+            Ok(val) => val,
+            Err(e) => panic!("Cannot parse request body to struct {:?}", e),
+        },
+        Err(e) => panic!("Cannot read json bdoy from the response {:?}", e),
+    };
 }
 
 
 pub fn register(register_args: RegisterArgs, connection: Connection) -> () {
-    let response = match connection.send_register(register_args) {
-        Ok(response) => response,
-        Err(e) => panic!("Register error {:?}", e),
-    };
+    let response = connection.send_register(register_args);
 
-    if !response.status().is_success() {
-        // Server responded with an error --> to the Future add handling of different errors
-        return handle_server_error(response);
-    }
-
-    let body: RegisterLoginResponse = match response.json() {
-        Ok(body) => match serde_json::from_value(body) {
-            Ok(val) => val,
-            Err(e) => panic!("Cannot parse Register Body {:?}", e),
-        }
-        Err(e) => panic!("Cannot read json body from the response: {:?}", e),
-    };
-
+    let body: RegisterLoginResponse = get_response_body(response);
     set_token(body.token);
     println!("Successful registration and login. You can manage your biom now.");
 }
 
 pub fn login(login_args: LoginArgs, connection: Connection) -> () {
-    let response = match connection.send_login(login_args) {
-        Ok(response) => response,
-        Err(e) => panic!("Login error {:?}", e),
-    };
+    let response = connection.send_login(login_args);
 
-    if !response.status().is_success() {
-        // Server responded with an error
-        return handle_server_error(response);
-    }
-
-    let body: RegisterLoginResponse = match response.json() {
-        Ok(body) => match serde_json::from_value(body) {
-            Ok(val) => val,
-            Err(e) => panic!("Cannot parse Login Body {:?}", e),
-        },
-        Err(e) => panic!("Cannot read json body from the response: {:?}", e),
-    };
-
+    let body: RegisterLoginResponse = get_response_body(response);
     set_token(body.token);
     println!("Successful login. You can manage your biom now.");
+}
+
+pub fn list_plants(connection: Connection) -> () {
+    let response = connection.send_list_plants();
+
+    let body: Vec<PlantResponse> = get_response_body(response);
+    println!("Plants:\n{:?}", body);
+}
+
+pub fn create_plant(create_args: CreatePlantArgs, connection: Connection) -> () {
+    println!("provided args {:?}", create_args);
+    let response = connection.send_create_plant(create_args);
+
+    let body: PlantResponse = get_response_body(response);
+    println!("Created plant:\n{:?}", body);
 }

@@ -1,45 +1,83 @@
 use serde::{Deserialize, Serialize};
+use std::env::{self};
+use reqwest::header::{AUTHORIZATION, HeaderMap};
+use reqwest::blocking::{Client, Response};
+use reqwest::Error;
 
-use crate::cli_args::{RegisterArgs, LoginArgs};
+use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs};
+
+fn create_auth_header() -> HeaderMap {
+    let token = match env::var("VEGETATION_TOKEN") {
+        Ok(token) => token,
+        Err(_) => panic!("Token not found. You need to login first."),
+    };
+
+    let mut auth_header = String::from("Token ");
+    auth_header.push_str(&token);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, auth_header.parse().unwrap());
+
+    return headers;
+}
 
 pub struct Connection {
-    pub client: reqwest::blocking::Client,
+    pub client: Client,
     url: String,  // should change it to &str
 }
 
 impl Connection {
      pub fn build_connection() -> Connection {
          Connection {
-             client: reqwest::blocking::Client::new(),
+             client: Client::new(),
              url: String::from("http://127.0.0.1:8080/api/v1/"),
          }
      }
 
-     pub fn send_get(&self, endpoint: &str) -> Result<reqwest::blocking::Response, reqwest::Error> {
-         self.client.get(self.url.to_owned() + endpoint).send()
+     pub fn send_get(&self, endpoint: &str, headers: Option<HeaderMap>) -> Result<Response, Error> {
+         let headers = match headers {
+             Some(h) => h,
+             None => HeaderMap::new(),
+         };
+
+         return self.client.get(self.url.to_owned() + endpoint).headers(headers).send();
      }
 
-     pub fn send_post<T: Serialize>(&self, endpoint: &str, body: T) -> Result<reqwest::blocking::Response, reqwest::Error> {
-         self.client.post(self.url.to_owned() + endpoint)
-             .json(&body)
-             .send()
+     pub fn send_post<T: Serialize>(&self, endpoint: &str, body: T, headers: Option<HeaderMap>) -> Result<Response, Error> {
+         let headers = match headers {
+             Some(h) => h,
+             None => HeaderMap::new(),
+         };
+
+         return self.client.post(self.url.to_owned() + endpoint)
+             .json(&body).headers(headers).send();
      }
 
-     pub fn send_register(&self, args: RegisterArgs) -> Result<reqwest::blocking::Response, reqwest::Error> {
+     pub fn send_register(&self, args: RegisterArgs) -> Result<Response, Error> {
          let register_body = RegisterBody {
              email: String::from(args.email),
              username: String::from(args.username),
              password: String::from(args.password),
          };
-         self.send_post("register", register_body)
+         self.send_post("register", register_body, None)
      }
 
-     pub fn send_login(&self, args: LoginArgs) -> Result<reqwest::blocking::Response, reqwest::Error> {
+     pub fn send_login(&self, args: LoginArgs) -> Result<Response, Error> {
          let login_body = LoginBody {
              username: String::from(args.username),
              password: String::from(args.password),
          };
-         self.send_post("login", login_body)
+         self.send_post("login", login_body, None)
+     }
+
+     pub fn send_list_plants(&self) -> Result<Response, Error> {
+         let headers = create_auth_header();
+         return self.send_get("plants", Some(headers));
+     }
+
+     pub fn send_create_plant(&self, create_args: CreatePlantArgs) -> Result<Response, Error> {
+         let headers = create_auth_header();
+         return self.send_post("plants", create_args, Some(headers));
      }
 }
 
@@ -60,4 +98,18 @@ struct LoginBody {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterLoginResponse {
     pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlantResponse {
+    pub id: u32,
+    pub name: String,
+    pub description: String,
+    pub last_watered: String,
+    pub water_frequency_summer: u32,
+    pub water_frequency_winter: u32,
+    pub owner: u32,
+    pub watering_type: String,
+    pub drought_tolerance: String,
+    pub light_requirement: String,
 }
