@@ -31,8 +31,14 @@ pub struct DeletePlantArgs {
     pub plant_id: u32,
 }
 
+#[derive(Debug, Args, Serialize)]
+pub struct SetServerArgs {
+    pub url: String,
+}
+
 #[derive(Debug, Subcommand)]
 pub enum CLIOperation {
+    SetServer(SetServerArgs),
     Register(RegisterArgs),
     Login(LoginArgs),
     ListPlants,

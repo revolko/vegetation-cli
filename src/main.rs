@@ -7,7 +7,7 @@ use clap::Parser;
 
 use connection::Connection;
 use cli_args::{CliParameters, CLIOperation};
-use operations::{register, login, list_plants, create_plant, delete_plant};
+use operations::{register, login, list_plants, create_plant, delete_plant, set_server};
 
 fn main() -> () {
     let connection = Connection::build_connection();
@@ -19,5 +19,6 @@ fn main() -> () {
         CLIOperation::Register(register_args) => register(register_args, connection),
         CLIOperation::CreatePlant(create_plant_args) => create_plant(create_plant_args, connection),
         CLIOperation::DeletePlant(delete_plant_args) => delete_plant(delete_plant_args, connection),
+        CLIOperation::SetServer(set_server_args) => set_server(set_server_args),
     }
 }

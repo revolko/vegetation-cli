@@ -26,9 +26,14 @@ pub struct Connection {
 
 impl Connection {
      pub fn build_connection() -> Connection {
+         let conf: VegConfig = match confy::load(VEG_CONFIG_NAME, None) {
+             Ok(conf) => conf,
+             Err(e) => panic!("Unable to retrieve app configuration {:?}", e),
+         };
+
          Connection {
              client: Client::new(),
-             url: String::from("http://127.0.0.1:8080/api/v1/"),
+             url: conf.url + "/api/v1/",
          }
      }
 

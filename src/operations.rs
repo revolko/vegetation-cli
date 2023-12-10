@@ -3,14 +3,17 @@ use serde::de::DeserializeOwned;
 use reqwest::blocking::Response;
 use reqwest::Error;
 
-use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs, DeletePlantArgs};
+use crate::cli_args::{RegisterArgs, LoginArgs, CreatePlantArgs, DeletePlantArgs, SetServerArgs};
 use crate::connection::{Connection, RegisterLoginResponse, PlantResponse};
 use crate::config::{VegConfig, VEG_CONFIG_NAME};
 
-fn set_token(value: String) -> () {
-    let conf = VegConfig {
-        token: value,
+fn set_token(token: String) -> () {
+    let mut conf: VegConfig = match confy::load(VEG_CONFIG_NAME, None) {
+        Ok(conf) => conf,
+        Err(e) => panic!("Unable to retrieve the app configuration {:?}", e),
     };
+
+    conf.token = token;
     confy::store(VEG_CONFIG_NAME, None, conf).unwrap();
 }
 
@@ -86,5 +89,19 @@ pub fn delete_plant(delete_args: DeletePlantArgs, connection: Connection) -> () 
 
     if !response.status().is_success() {
         handle_server_error(response);
+    };
+}
+
+pub fn set_server(set_args: SetServerArgs) -> () {
+    let mut conf: VegConfig = match confy::load(VEG_CONFIG_NAME, None) {
+        Ok(conf) => conf,
+        Err(e) => panic!("Unable to retrieve app configuration {:?}", e),
+    };
+
+    conf.url = set_args.url;
+
+    match confy::store(VEG_CONFIG_NAME, None, conf) {
+        Ok(_) => (),
+        Err(e) => panic!("Unable to store updated config {:?}", e),
     };
 }
