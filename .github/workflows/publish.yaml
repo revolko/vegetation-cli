@@ -1,9 +1,11 @@
 name: Publish to Cargo
 
 on:
-  push:
-    branches: [ master ]
-    paths: [ Cargo.toml ]
+  workflow_run:
+    workflows:
+      - "Create a new release"
+    types:
+      - completed
 
 jobs:
   publish:
